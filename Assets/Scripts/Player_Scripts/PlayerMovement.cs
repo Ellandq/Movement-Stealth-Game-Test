@@ -61,29 +61,55 @@ public class PlayerMovement : MonoBehaviour
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
     }
 
-    private void UserMovement (){
+    private void UserMovement() {
         float x = Input.GetAxisRaw("Horizontal");
         float z = Input.GetAxisRaw("Vertical");
-        
+
         Vector3 baseMovementNormalized = (transform.right * x + transform.forward * z).normalized;
 
-        if (baseMovementNormalized.magnitude <= 0.5f){
-            accelerationStatus = Mathf.MoveTowards(accelerationStatus, 0f, 4f * acceleration * Time.deltaTime);
-        }else{
+        if (baseMovementNormalized.magnitude <= 0.5f) {
+            accelerationStatus = Mathf.MoveTowards(accelerationStatus, 0f, 2f * acceleration * Time.deltaTime);
+        } else {
             accelerationStatus = Mathf.MoveTowards(accelerationStatus, 1f, acceleration * Time.deltaTime);
         }
 
-        Vector3 horizontalVelocity = baseMovementNormalized * 
-        (speed + accelerationStatus * (maxSpeed - speed) - 
-        (1 - accelerationStatus) * speed * deceleration);
-        
-        velocity.x = Mathf.Clamp(horizontalVelocity.x, -maxSpeed, maxSpeed);
-        velocity.z = Mathf.Clamp(horizontalVelocity.z, -maxSpeed, maxSpeed);
+        Vector3 horizontalVelocity = baseMovementNormalized *
+            (speed + accelerationStatus * (maxSpeed - speed));
+
+        Vector3 newVelocity;
+
+        if (isGrounded) {
+            // Apply gradual deceleration only when grounded
+            if (baseMovementNormalized.magnitude <= 0.1f) {
+                newVelocity = Vector3.MoveTowards(velocity, Vector3.zero, 250f * deceleration * Time.deltaTime);
+            } else {
+                newVelocity = Vector3.Lerp(velocity, horizontalVelocity, accelerationStatus);
+            }
+        } else {
+            // Maintain momentum while in mid-air
+            newVelocity = velocity + horizontalVelocity * Time.deltaTime;
+        }
+
+        // Apply clamping to individual components of newVelocity
+        newVelocity = new Vector3(
+            Mathf.Clamp(newVelocity.x, -maxSpeed, maxSpeed),
+            newVelocity.y,
+            Mathf.Clamp(newVelocity.z, -maxSpeed, maxSpeed)
+        );
+
+        // Update the actual velocity after all calculations
+        velocity.x = newVelocity.x;
+        velocity.z = newVelocity.z;
     }
+
 
     private void GravityAcceleration (){
         if (!controller.isGrounded){
             velocity.y += Physics.gravity.y * Time.deltaTime;
+        }else{
+            if (velocity.y < -0.2f && !(velocity.y > 0f)){
+                velocity.y = Mathf.Lerp(velocity.y, 0f, 0.5f);
+            }
         }
     }
     

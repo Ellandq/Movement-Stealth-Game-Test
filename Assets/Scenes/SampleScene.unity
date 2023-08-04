@@ -1987,18 +1987,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 832731f9aaada9441b35e91aee484f65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 12
-  playerGravity: -39.24
+  speed: 18
+  maxSpeed: 35
+  acceleration: 0.5
+  deceleration: 0.3
   jumpHeight: 3
   velocity: {x: 0, y: 0, z: 0}
+  currentVelocity: 0
+  accelerationStatus: 0
   isGrounded: 0
   controller: {fileID: 859736136}
-  groundCheck: {fileID: 1842523552}
   groundMask:
     serializedVersion: 2
     m_Bits: 512
   groundDistance: 0.4
-  jumpPower: 0
 --- !u!43 &947603124
 Mesh:
   m_ObjectHideFlags: 0
