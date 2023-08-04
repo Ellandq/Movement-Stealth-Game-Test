@@ -68,7 +68,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 baseMovementNormalized = (transform.right * x + transform.forward * z).normalized;
 
         if (baseMovementNormalized.magnitude <= 0.5f){
-            accelerationStatus = 0f;
+            accelerationStatus = Mathf.MoveTowards(accelerationStatus, 0f, 4f * acceleration * Time.deltaTime);
         }else{
             accelerationStatus = Mathf.MoveTowards(accelerationStatus, 1f, acceleration * Time.deltaTime);
         }
