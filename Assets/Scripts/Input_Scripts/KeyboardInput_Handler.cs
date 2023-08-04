@@ -6,5 +6,10 @@ using UnityEngine.EventSystems;
 
 public class KeyboardInput_Handler : MonoBehaviour
 {
-    
+    [Header ("Events called")]
+    public Action onJumpButtonPressed;
+
+    private void Update (){
+       
+    }
 }

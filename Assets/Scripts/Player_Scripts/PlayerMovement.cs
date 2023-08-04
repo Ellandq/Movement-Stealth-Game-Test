@@ -7,6 +7,7 @@ public class PlayerMovement : MonoBehaviour
     [Header ("Movement Settings")]
     [SerializeField] private float speed = 12f;
     [SerializeField] private float playerGravity = -9.81f;
+    [SerializeField] private float jumpHeight = 3f;
 
     [Header ("Player Information")]
     [SerializeField] private Vector3 velocity; // Remove the serialization later
@@ -19,21 +20,52 @@ public class PlayerMovement : MonoBehaviour
     [Header ("Misc. Settings")]
     [SerializeField] private LayerMask groundMask;
     [SerializeField] private float groundDistance = 0.4f;
+
+    [Header ("Jump Settings")]
+    [SerializeField] private float jumpPower;
     
+
+    
+
+    private void Start (){
+
+    }
+
     private void Update()
     {
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        UpdateGroundedStatus();
 
+        GravityAcceleration();
+
+        UserMovement();
+    }
+
+    #region Player Checks
+
+    private void UpdateGroundedStatus (){
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+    }
+
+    #endregion
+
+    #region Player Movement
+
+    private void Jump (){
+        if (!isGrounded) return;
+
+        velocity.y = Mathf.Sqrt(jumpHeight * -2f * playerGravity);
+    }
+
+    private void UserMovement (){
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
-        // Player movement 
-        // TODO make it so the player adds accelerates rather then move at a constant speed
         Vector3 move = transform.right * x + transform.forward * z;
 
         controller.Move(move * speed * Time.deltaTime);
+    }
 
-        // Gravity
+    private void GravityAcceleration (){
         if (!isGrounded){
             velocity.y += playerGravity * Time.deltaTime;
 
@@ -41,8 +73,15 @@ public class PlayerMovement : MonoBehaviour
         }else{
             velocity.y = -2f;
         }
-        
-
-        
     }
+    
+    #endregion
+
+    #region Getters
+
+    public bool IsGrounded(){
+        return isGrounded;
+    }
+
+    #endregion
 }
