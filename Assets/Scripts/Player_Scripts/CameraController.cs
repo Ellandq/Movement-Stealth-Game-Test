@@ -18,6 +18,7 @@ public class CameraController : MonoBehaviour
     private void Start()
     {   
         // This should be called outise the script when activating the player character
+
         ChangePlayerCameraState();
     }
 
