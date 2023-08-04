@@ -5,45 +5,51 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header ("Movement Settings")]
+    // Horizontal Movement
     [SerializeField] private float speed = 12f;
-    [SerializeField] private float playerGravity = -9.81f;
-    [SerializeField] private float jumpHeight = 3f;
+    [SerializeField] private float maxSpeed = 25f;
+    [SerializeField] private float acceleration = 10f;
+    [SerializeField] private float deceleration = 12f;
+    // Vertical movement
+    [SerializeField] private float jumpHeight = 4f;
+    
 
     [Header ("Player Information")]
     [SerializeField] private Vector3 velocity; // Remove the serialization later
+    [SerializeField] private float currentVelocity;
+    [SerializeField] private float accelerationStatus = 0f;
     [SerializeField] private bool isGrounded;
 
     [Header ("Object References")]
     [SerializeField] private CharacterController controller;
-    [SerializeField] private Transform groundCheck;
 
     [Header ("Misc. Settings")]
     [SerializeField] private LayerMask groundMask;
     [SerializeField] private float groundDistance = 0.4f;
 
-    [Header ("Jump Settings")]
-    [SerializeField] private float jumpPower;
-    
-
-    
-
     private void Start (){
-
+        InputManager.Instance.GetKeyboardInputHandler().onJumpButtonPressed += Jump;
     }
 
     private void Update()
     {
+        currentVelocity = new Vector3(velocity.x, 0f, velocity.z).magnitude;
+
         UpdateGroundedStatus();
 
         GravityAcceleration();
 
         UserMovement();
+
+        // Clamping the vertical velocity to the human terminal velocity
+        Mathf.Clamp(velocity.y, -55f, 120f);
+        controller.Move(velocity * Time.deltaTime);
     }
 
     #region Player Checks
 
     private void UpdateGroundedStatus (){
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        isGrounded = controller.isGrounded;
     }
 
     #endregion
@@ -51,27 +57,33 @@ public class PlayerMovement : MonoBehaviour
     #region Player Movement
 
     private void Jump (){
-        if (!isGrounded) return;
-
-        velocity.y = Mathf.Sqrt(jumpHeight * -2f * playerGravity);
+        if (!controller.isGrounded) return;
+        velocity.y = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
     }
 
     private void UserMovement (){
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
+        float x = Input.GetAxisRaw("Horizontal");
+        float z = Input.GetAxisRaw("Vertical");
+        
+        Vector3 baseMovementNormalized = (transform.right * x + transform.forward * z).normalized;
 
-        Vector3 move = transform.right * x + transform.forward * z;
+        if (baseMovementNormalized.magnitude <= 0.5f){
+            accelerationStatus = 0f;
+        }else{
+            accelerationStatus = Mathf.MoveTowards(accelerationStatus, 1f, acceleration * Time.deltaTime);
+        }
 
-        controller.Move(move * speed * Time.deltaTime);
+        Vector3 horizontalVelocity = baseMovementNormalized * 
+        (speed + accelerationStatus * (maxSpeed - speed) - 
+        (1 - accelerationStatus) * speed * deceleration);
+        
+        velocity.x = Mathf.Clamp(horizontalVelocity.x, -maxSpeed, maxSpeed);
+        velocity.z = Mathf.Clamp(horizontalVelocity.z, -maxSpeed, maxSpeed);
     }
 
     private void GravityAcceleration (){
-        if (!isGrounded){
-            velocity.y += playerGravity * Time.deltaTime;
-
-            controller.Move(velocity * Time.deltaTime);
-        }else{
-            velocity.y = -2f;
+        if (!controller.isGrounded){
+            velocity.y += Physics.gravity.y * Time.deltaTime;
         }
     }
     
@@ -80,7 +92,7 @@ public class PlayerMovement : MonoBehaviour
     #region Getters
 
     public bool IsGrounded(){
-        return isGrounded;
+        return controller.isGrounded;
     }
 
     #endregion
