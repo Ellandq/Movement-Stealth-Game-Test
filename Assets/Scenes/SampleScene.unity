@@ -1987,8 +1987,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 832731f9aaada9441b35e91aee484f65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 18
-  maxSpeed: 35
+  speed: 12
+  maxSpeed: 28
+  airControlSpeed: 2
   acceleration: 0.5
   deceleration: 0.3
   jumpHeight: 3

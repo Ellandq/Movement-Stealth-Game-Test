@@ -8,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
     // Horizontal Movement
     [SerializeField] private float speed = 12f;
     [SerializeField] private float maxSpeed = 25f;
+    [SerializeField] private float airControlSpeed = 0.2f;
     [SerializeField] private float acceleration = 10f;
     [SerializeField] private float deceleration = 12f;
     // Vertical movement
@@ -86,8 +87,16 @@ public class PlayerMovement : MonoBehaviour
                 newVelocity = Vector3.Lerp(velocity, horizontalVelocity, accelerationStatus);
             }
         } else {
-            // Maintain momentum while in mid-air
-            newVelocity = velocity + horizontalVelocity * Time.deltaTime;
+            // Apply mid-air acceleration
+            float airAcceleration = 0.2f; // Adjust this value for mid-air acceleration
+            Vector3 midAirAcceleration = baseMovementNormalized * airAcceleration * Time.deltaTime;
+
+            // Allow more control of momentum while in mid-air
+            Vector3 adjustedHorizontalVelocity = horizontalVelocity * (1 - accelerationStatus);
+            Vector3 playerInputInfluence = (baseMovementNormalized * airControlSpeed * Time.deltaTime);
+
+            // Combine adjusted velocity, mid-air acceleration, and player input influence
+            newVelocity = velocity + adjustedHorizontalVelocity / 50f + midAirAcceleration + playerInputInfluence;
         }
 
         // Apply clamping to individual components of newVelocity
@@ -101,7 +110,6 @@ public class PlayerMovement : MonoBehaviour
         velocity.x = newVelocity.x;
         velocity.z = newVelocity.z;
     }
-
 
     private void GravityAcceleration (){
         if (!controller.isGrounded){
