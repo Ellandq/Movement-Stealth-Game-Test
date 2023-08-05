@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 
 public class MouseInput_Handler : MonoBehaviour
 {
-    [Header ("Events called on ")]
+    [Header ("Events called")]
     public Action onLeftMouseButtonPressed;
     public Action onRightMouseButtonPressed;
 
