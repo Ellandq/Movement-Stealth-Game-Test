@@ -6,23 +6,26 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header ("Movement Settings")]
     // Horizontal Movement
-    [SerializeField] private float speed = 12f;
-    [SerializeField] private float maxSpeed = 25f;
-    [SerializeField] private float airControlSpeed = 0.2f;
-    [SerializeField] private float acceleration = 10f;
-    [SerializeField] private float deceleration = 12f;
+    [SerializeField] private float speed = 18f;
+    [SerializeField] private float maxSpeed = 35f;
+    [SerializeField] private float airControlSpeed = 60f;
+    [SerializeField] private float acceleration = 0.5f;
+    [SerializeField] private float deceleration = 0.4f;
     // Vertical movement
     [SerializeField] private float jumpHeight = 4f;
     
 
     [Header ("Player Information")]
-    [SerializeField] private Vector3 velocity; // Remove the serialization later
+    // Movement
     [SerializeField] private float currentVelocity;
-    [SerializeField] private float accelerationStatus = 0f;
+    private Vector3 velocity;
+    private float accelerationStatus = 0f;
+    // Statuses
     [SerializeField] private bool isGrounded;
 
     [Header ("Object References")]
     [SerializeField] private CharacterController controller;
+    [SerializeField] private Transform groundCheck;
 
     [Header ("Misc. Settings")]
     [SerializeField] private LayerMask groundMask;
@@ -50,7 +53,7 @@ public class PlayerMovement : MonoBehaviour
     #region Player Checks
 
     private void UpdateGroundedStatus (){
-        isGrounded = controller.isGrounded;
+        isGrounded = controller.isGrounded || Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
     }
 
     #endregion
@@ -58,10 +61,11 @@ public class PlayerMovement : MonoBehaviour
     #region Player Movement
 
     private void Jump (){
-        if (!controller.isGrounded) return;
+        if (!isGrounded) return;
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
     }
 
+    // Function handling movement based on user input
     private void UserMovement() {
         float x = Input.GetAxisRaw("Horizontal");
         float z = Input.GetAxisRaw("Vertical");
@@ -87,16 +91,15 @@ public class PlayerMovement : MonoBehaviour
                 newVelocity = Vector3.Lerp(velocity, horizontalVelocity, accelerationStatus);
             }
         } else {
-            // Apply mid-air acceleration
-            float airAcceleration = 0.2f; // Adjust this value for mid-air acceleration
-            Vector3 midAirAcceleration = baseMovementNormalized * airAcceleration * Time.deltaTime;
+            // Calculate mid-air acceleration based on the current velocity
+            Vector3 midAirAcceleration = baseMovementNormalized * airControlSpeed * Time.deltaTime * Mathf.Clamp01(1f - velocity.magnitude / maxSpeed);
 
             // Allow more control of momentum while in mid-air
-            Vector3 adjustedHorizontalVelocity = horizontalVelocity * (1 - accelerationStatus);
-            Vector3 playerInputInfluence = (baseMovementNormalized * airControlSpeed * Time.deltaTime);
+            Vector3 playerInputInfluence = baseMovementNormalized * airControlSpeed * Time.deltaTime;
 
             // Combine adjusted velocity, mid-air acceleration, and player input influence
-            newVelocity = velocity + adjustedHorizontalVelocity / 50f + midAirAcceleration + playerInputInfluence;
+            newVelocity = velocity + midAirAcceleration + playerInputInfluence;
+
         }
 
         // Apply clamping to individual components of newVelocity
@@ -111,6 +114,7 @@ public class PlayerMovement : MonoBehaviour
         velocity.z = newVelocity.z;
     }
 
+    // Function handling the player gravity
     private void GravityAcceleration (){
         if (!controller.isGrounded){
             velocity.y += Physics.gravity.y * Time.deltaTime;
@@ -126,7 +130,11 @@ public class PlayerMovement : MonoBehaviour
     #region Getters
 
     public bool IsGrounded(){
-        return controller.isGrounded;
+        return isGrounded;
+    }
+
+    public float GetCurrentVelocity(){
+        return currentVelocity;
     }
 
     #endregion
