@@ -1995,11 +1995,10 @@ MonoBehaviour:
   deceleration: 0.4
   jumpHeight: 3
   currentVelocity: 0
-  totalCollidingDecelerationVector: {x: 0, y: 0, z: 0}
   isGrounded: 0
+  isSliding: 0
   controller: {fileID: 859736136}
   groundCheck: {fileID: 1842523552}
-  collisionCheck: {fileID: 0}
   groundMask:
     serializedVersion: 2
     m_Bits: 512
@@ -9649,7 +9648,7 @@ Transform:
   m_GameObject: {fileID: 1579212974}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5, y: 1, z: 1.5}
+  m_LocalScale: {x: 1.5, y: 2, z: 1.5}
   m_Children: []
   m_Father: {fileID: 859736137}
   m_RootOrder: 3
@@ -9670,8 +9669,8 @@ MonoBehaviour:
   collisionLayers:
     serializedVersion: 2
     m_Bits: 3584
---- !u!135 &1579212977
-SphereCollider:
+--- !u!136 &1579212977
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -9680,8 +9679,9 @@ SphereCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 0.45
+  m_Height: 1
+  m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!33 &1579212978
 MeshFilter:
@@ -9702,10 +9702,10 @@ Rigidbody:
   m_Mass: 1
   m_Drag: 0
   m_AngularDrag: 0
-  m_UseGravity: 0
+  m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 14
+  m_Constraints: 126
   m_CollisionDetection: 0
 --- !u!1 &1586885290
 GameObject:

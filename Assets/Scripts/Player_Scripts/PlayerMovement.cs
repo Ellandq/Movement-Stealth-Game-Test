@@ -21,14 +21,14 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 velocity;
     private float accelerationStatus = 0f;
     private float accelerationStatusClamp = 1f;
-    [SerializeField] private Vector3 totalCollidingDecelerationVector;
+    private Vector3 totalCollidingDecelerationVector;
     // Statuses
-    [SerializeField] private bool isGrounded;
+    [SerializeField] private bool isGrounded = false;
+    [SerializeField] private bool isSliding = false;
 
     [Header ("Object References")]
     [SerializeField] private CharacterController controller;
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private Transform collisionCheck;
 
     [Header ("Misc. Settings")]
     [SerializeField] private LayerMask groundMask;
@@ -48,8 +48,6 @@ public class PlayerMovement : MonoBehaviour
 
         UserMovement();
 
-        // Clamping the vertical velocity to the human terminal velocity
-        Mathf.Clamp(velocity.y, -55f, 120f);
         controller.Move(velocity * Time.deltaTime);
     }
 
@@ -66,6 +64,10 @@ public class PlayerMovement : MonoBehaviour
     private void Jump (){
         if (!isGrounded) return;
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
+    }
+
+    private void Slide (){
+
     }
 
     // Function handling movement based on user input
@@ -96,25 +98,21 @@ public class PlayerMovement : MonoBehaviour
                 newVelocity = Vector3.Lerp(velocity, horizontalVelocity, accelerationStatus);
             }
         } else {
-            // Calculate mid-air acceleration based on the current velocity
-            Vector3 midAirAcceleration = baseMovementNormalized * airControlSpeed * Time.deltaTime * Mathf.Clamp01(1f - velocity.magnitude / maxSpeed);
-
             // Allow more control of momentum while in mid-air
             Vector3 playerInputInfluence = baseMovementNormalized * airControlSpeed * Time.deltaTime;
 
             // Combine adjusted velocity, mid-air acceleration, and player input influence
-            newVelocity = velocity + midAirAcceleration + playerInputInfluence;
-
+            newVelocity = velocity + playerInputInfluence;
         }
 
         // Apply clamping to individual components of newVelocity
         newVelocity = new Vector3(
             Mathf.Clamp(newVelocity.x, -maxSpeed, maxSpeed),
-            newVelocity.y,
+            Mathf.Clamp(newVelocity.y, -55f, 55f),
             Mathf.Clamp(newVelocity.z, -maxSpeed, maxSpeed)
         );
 
-        newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 2f;
+        newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 4f;
 
         // Update the actual velocity after all calculations
         velocity.x = newVelocity.x;
