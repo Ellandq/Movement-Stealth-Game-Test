@@ -20,12 +20,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float currentVelocity;
     private Vector3 velocity;
     private float accelerationStatus = 0f;
+    [SerializeField] private Vector3 totalCollidingDecelerationVector;
     // Statuses
     [SerializeField] private bool isGrounded;
 
     [Header ("Object References")]
     [SerializeField] private CharacterController controller;
     [SerializeField] private Transform groundCheck;
+    [SerializeField] private Transform collisionCheck;
 
     [Header ("Misc. Settings")]
     [SerializeField] private LayerMask groundMask;
@@ -109,9 +111,20 @@ public class PlayerMovement : MonoBehaviour
             Mathf.Clamp(newVelocity.z, -maxSpeed, maxSpeed)
         );
 
+        newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 2f;
+
         // Update the actual velocity after all calculations
         velocity.x = newVelocity.x;
         velocity.z = newVelocity.z;
+    }
+
+    public void CollisionDeceleration (Vector3 displacementVectorNormalized){
+        (totalCollidingDecelerationVector += displacementVectorNormalized).Normalize();
+    }
+
+    public void ClearCollisionDeceleration (Vector3 displacementVectorNormalized, int collisionLeft){
+        if (collisionLeft == 0) totalCollidingDecelerationVector = Vector3.zero;
+        else (totalCollidingDecelerationVector -= displacementVectorNormalized).Normalize();
     }
 
     // Function handling the player gravity
