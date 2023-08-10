@@ -8,7 +8,8 @@ public class KeyboardInput_Handler : MonoBehaviour
 {
     [Header ("Events called")]
     public Action onJumpButtonPressed;
-    public Action onSlideButtonPressed;
+    public Action onSlideButtonDown;
+    public Action onSlideButtonUp;
 
     [Header ("Keybinds")]
     private KeyCode jumpKey = KeyCode.Space;
@@ -22,7 +23,8 @@ public class KeyboardInput_Handler : MonoBehaviour
         // Jump
         if (Input.GetKeyDown(jumpKey)) onJumpButtonPressed?.Invoke();
         // Slide
-        if (Input.GetKey(slideKey)) onSlideButtonPressed?.Invoke();
+        if (Input.GetKeyDown(slideKey)) onSlideButtonDown?.Invoke();
+        else if (Input.GetKeyUp(slideKey)) onSlideButtonUp?.Invoke();
     }
 
     public void UpdatePlayerKeyBinds (){

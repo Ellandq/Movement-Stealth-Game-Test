@@ -1989,10 +1989,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 14
-  maxSpeed: 20
+  maxSpeed: 25
   airControlSpeed: 60
   acceleration: 0.5
   deceleration: 0.4
+  slidingDeceleration: 5
   jumpHeight: 3
   currentVelocity: 0
   isGrounded: 0
