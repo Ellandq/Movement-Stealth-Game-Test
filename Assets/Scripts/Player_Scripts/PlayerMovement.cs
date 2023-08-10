@@ -9,8 +9,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float speed = 18f;
     [SerializeField] private float maxSpeed = 35f;
     [SerializeField] private float airControlSpeed = 60f;
-    [SerializeField] private float acceleration = 0.5f;
-    [SerializeField] private float deceleration = 0.4f;
+    [SerializeField] private float acceleration = .5f;
+    [SerializeField] private float deceleration = .4f;
+    [SerializeField] private float slidingDeceleration;
     // Vertical movement
     [SerializeField] private float jumpHeight = 4f;
     
@@ -21,21 +22,29 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 velocity;
     private float accelerationStatus = 0f;
     private float accelerationStatusClamp = 1f;
-    [SerializeField] private Vector3 totalCollidingDecelerationVector;
+    private Vector3 totalCollidingDecelerationVector;
+    private Vector3 lastSavedSlidingDirection;
+    // Size
+    private float startYScale;
+    private float reducedYScale = .5f;
     // Statuses
-    [SerializeField] private bool isGrounded;
+    [SerializeField] private bool isGrounded = false;
+    [SerializeField] private bool isSliding = false;
 
     [Header ("Object References")]
     [SerializeField] private CharacterController controller;
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private Transform collisionCheck;
 
     [Header ("Misc. Settings")]
     [SerializeField] private LayerMask groundMask;
-    [SerializeField] private float groundDistance = 0.4f;
+    [SerializeField] private float groundDistance = .4f;
 
     private void Start (){
+        startYScale = transform.localScale.y;
+
         InputManager.Instance.GetKeyboardInputHandler().onJumpButtonPressed += Jump;
+        InputManager.Instance.GetKeyboardInputHandler().onSlideButtonDown += EnableSlide;
+        InputManager.Instance.GetKeyboardInputHandler().onSlideButtonUp += DisableSlide;
     }
 
     private void Update()
@@ -46,17 +55,28 @@ public class PlayerMovement : MonoBehaviour
 
         GravityAcceleration();
 
-        UserMovement();
+        if (!isSliding) UserMovement();
+        else Slide();
 
-        // Clamping the vertical velocity to the human terminal velocity
-        Mathf.Clamp(velocity.y, -55f, 120f);
         controller.Move(velocity * Time.deltaTime);
     }
 
-    #region Player Checks
+    #region Player States
 
     private void UpdateGroundedStatus (){
         isGrounded = controller.isGrounded || Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+    }
+
+    private void EnableSlide (){
+        if (!isGrounded && currentVelocity > 0f) return;
+        transform.localScale = new Vector3(1f, reducedYScale, 1f);
+        isSliding = true;
+        lastSavedSlidingDirection = new Vector3(velocity.x, 0f, velocity.z).normalized;
+    }
+
+    private void DisableSlide (){
+        transform.localScale = new Vector3(1f, startYScale, 1f);
+        isSliding = false;
     }
 
     #endregion
@@ -65,7 +85,24 @@ public class PlayerMovement : MonoBehaviour
 
     private void Jump (){
         if (!isGrounded) return;
+        DisableSlide();
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
+    }
+
+    private void Slide (){
+        Vector3 horizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
+        Vector3 newVelocity = horizontalVelocity - lastSavedSlidingDirection * slidingDeceleration * Time.deltaTime;
+
+        if (newVelocity.magnitude < 5f || Vector3.Dot(lastSavedSlidingDirection, newVelocity.normalized) < 0.5f){
+            DisableSlide();
+            return;
+        }
+
+        newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 1f;
+
+        // Update the actual velocity after all calculations
+        velocity.x = newVelocity.x;
+        velocity.z = newVelocity.z;
     }
 
     // Function handling movement based on user input
@@ -96,25 +133,21 @@ public class PlayerMovement : MonoBehaviour
                 newVelocity = Vector3.Lerp(velocity, horizontalVelocity, accelerationStatus);
             }
         } else {
-            // Calculate mid-air acceleration based on the current velocity
-            Vector3 midAirAcceleration = baseMovementNormalized * airControlSpeed * Time.deltaTime * Mathf.Clamp01(1f - velocity.magnitude / maxSpeed);
-
             // Allow more control of momentum while in mid-air
             Vector3 playerInputInfluence = baseMovementNormalized * airControlSpeed * Time.deltaTime;
 
             // Combine adjusted velocity, mid-air acceleration, and player input influence
-            newVelocity = velocity + midAirAcceleration + playerInputInfluence;
-
+            newVelocity = velocity + playerInputInfluence;
         }
 
         // Apply clamping to individual components of newVelocity
         newVelocity = new Vector3(
             Mathf.Clamp(newVelocity.x, -maxSpeed, maxSpeed),
-            newVelocity.y,
+            Mathf.Clamp(newVelocity.y, -55f, 55f),
             Mathf.Clamp(newVelocity.z, -maxSpeed, maxSpeed)
         );
 
-        newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 2f;
+        if (isGrounded) newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 2f;
 
         // Update the actual velocity after all calculations
         velocity.x = newVelocity.x;
@@ -150,6 +183,10 @@ public class PlayerMovement : MonoBehaviour
 
     public bool IsGrounded(){
         return isGrounded;
+    }
+
+    public bool IsSliding (){
+        return isSliding;
     }
 
     public float GetCurrentVelocity(){
