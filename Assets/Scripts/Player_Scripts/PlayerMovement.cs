@@ -12,8 +12,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float acceleration = .5f;
     [SerializeField] private float deceleration = .4f;
     [SerializeField] private float slidingDeceleration;
+    [SerializeField] private float maxHorizontalSlidingSpeed;
     // Vertical movement
     [SerializeField] private float jumpHeight = 4f;
+    [SerializeField] private float gravityMultiplier = 1f;
     
 
     [Header ("Player Information")]
@@ -24,6 +26,7 @@ public class PlayerMovement : MonoBehaviour
     private float accelerationStatusClamp = 1f;
     private Vector3 totalCollidingDecelerationVector;
     private Vector3 lastSavedSlidingDirection;
+    private Vector3 currentSlidingHorizontalMovement;
     // Size
     private float startYScale;
     private float reducedYScale = .5f;
@@ -41,6 +44,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start (){
         startYScale = transform.localScale.y;
+        currentSlidingHorizontalMovement = Vector3.zero;
 
         InputManager.Instance.GetKeyboardInputHandler().onJumpButtonPressed += Jump;
         InputManager.Instance.GetKeyboardInputHandler().onSlideButtonDown += EnableSlide;
@@ -49,8 +53,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        currentVelocity = new Vector3(velocity.x, 0f, velocity.z).magnitude;
-
         UpdateGroundedStatus();
 
         GravityAcceleration();
@@ -59,6 +61,10 @@ public class PlayerMovement : MonoBehaviour
         else Slide();
 
         controller.Move(velocity * Time.deltaTime);
+
+        currentVelocity = new Vector3(velocity.x, 0f, velocity.z).magnitude;
+
+        if (currentVelocity == 0f) accelerationStatus = 0f;
     }
 
     #region Player States
@@ -69,14 +75,25 @@ public class PlayerMovement : MonoBehaviour
 
     private void EnableSlide (){
         if (!isGrounded && currentVelocity > 0f) return;
+        // Position adjustment
+        Vector3 adjustedPosition = transform.position;
+        adjustedPosition.y -= .95f;
+        transform.position = adjustedPosition;
+
+        currentSlidingHorizontalMovement = Vector3.zero;
+
+        // Scale adjustment
         transform.localScale = new Vector3(1f, reducedYScale, 1f);
+
         isSliding = true;
         lastSavedSlidingDirection = new Vector3(velocity.x, 0f, velocity.z).normalized;
+        gravityMultiplier = 4f;
     }
 
     private void DisableSlide (){
         transform.localScale = new Vector3(1f, startYScale, 1f);
         isSliding = false;
+        gravityMultiplier = 1f;
     }
 
     #endregion
@@ -90,15 +107,25 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void Slide (){
+        float x = Input.GetAxisRaw("Horizontal");
+
         Vector3 horizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
         Vector3 newVelocity = horizontalVelocity - lastSavedSlidingDirection * slidingDeceleration * Time.deltaTime;
 
-        if (newVelocity.magnitude < 5f || Vector3.Dot(lastSavedSlidingDirection, newVelocity.normalized) < 0.5f){
+        if (newVelocity.magnitude < 5f || Vector3.Dot(lastSavedSlidingDirection, newVelocity.normalized) < 0.7f){
             DisableSlide();
             return;
         }
+        
+        // Side movement
+        currentSlidingHorizontalMovement += transform.right * x * speed * Time.deltaTime;
 
-        newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 1f;
+        if (currentSlidingHorizontalMovement.magnitude < maxHorizontalSlidingSpeed){
+            newVelocity += transform.right * x * speed * Time.deltaTime;
+        }
+
+        // Collision deceleration
+        newVelocity -= Vector3.Project(newVelocity, totalCollidingDecelerationVector) / 2f;
 
         // Update the actual velocity after all calculations
         velocity.x = newVelocity.x;
@@ -169,7 +196,7 @@ public class PlayerMovement : MonoBehaviour
     // Function handling the player gravity
     private void GravityAcceleration (){
         if (!controller.isGrounded){
-            velocity.y += Physics.gravity.y * Time.deltaTime;
+            velocity.y += Physics.gravity.y * Time.deltaTime * gravityMultiplier;
         }else{
             if (velocity.y < -0.2f && !(velocity.y > 0f)){
                 velocity.y = Mathf.Lerp(velocity.y, 0f, 0.5f);
