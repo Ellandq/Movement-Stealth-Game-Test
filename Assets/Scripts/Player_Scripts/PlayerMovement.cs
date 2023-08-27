@@ -16,7 +16,8 @@ public class PlayerMovement : MonoBehaviour
     // Vertical movement
     [SerializeField] private float jumpHeight = 4f;
     [SerializeField] private float gravityMultiplier = 1f;
-    
+    // Slope settings
+    [SerializeField] private float maxSlopeAngle = 75f;
 
     [Header ("Player Information")]
     // Movement
@@ -110,7 +111,8 @@ public class PlayerMovement : MonoBehaviour
         float x = Input.GetAxisRaw("Horizontal");
 
         Vector3 horizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
-        Vector3 newVelocity = horizontalVelocity - lastSavedSlidingDirection * slidingDeceleration * Time.deltaTime;
+        Vector3 newVelocity = horizontalVelocity - (lastSavedSlidingDirection * slidingDeceleration
+        + GetCurrentSlopeDownwardsVector() * Physics.gravity.magnitude) * Time.deltaTime;
 
         if (newVelocity.magnitude < 5f || Vector3.Dot(lastSavedSlidingDirection, newVelocity.normalized) < 0.7f){
             DisableSlide();
@@ -218,6 +220,27 @@ public class PlayerMovement : MonoBehaviour
 
     public float GetCurrentVelocity(){
         return currentVelocity;
+    }
+
+    public Vector3 GetCurrentSlopeDownwardsVector (){
+        Ray ray = new Ray(transform.position + Vector3.up * 0.1f, Vector3.down);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, 2f, groundMask))
+        {
+            float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+
+            if (slopeAngle <= maxSlopeAngle)
+            {
+                // Calculate the normalized directional vector of the slope
+                Vector3 slopeDirection = -Vector3.Cross(Vector3.Cross(Vector3.up, hit.normal), hit.normal).normalized;
+                slopeDirection.y = -slopeDirection.y;
+                Debug.Log(slopeDirection);
+
+                return slopeDirection;
+            }
+        }
+        return Vector3.zero;
     }
 
     #endregion
