@@ -49,7 +49,6 @@ public class MovmentGridHandler : MonoBehaviour
                     // if (worldOccupationStatus[x, y, z]){
                     //     GameObject.CreatePrimitive(PrimitiveType.Sphere).transform.position = levelOriginPoint.position + offsetPosition;
                     // }
-                    
                 }
             }
         }
