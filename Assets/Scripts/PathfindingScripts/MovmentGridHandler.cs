@@ -24,6 +24,8 @@ public class MovmentGridHandler : MonoBehaviour
     [Header ("Pathfinding settings")]
     private bool[,,] worldOccupationStatus;
 
+    #region SetUp
+
     private void Awake (){
         Instance = this;
     }
@@ -54,6 +56,10 @@ public class MovmentGridHandler : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Getters
+
     private Vector3 GetClosestEmptyGridPositionFromWorldPosition (Vector3 worldPosition){
         Vector3 localPosition = levelOriginPoint.position - worldPosition;
         localPosition = new Vector3(
@@ -63,4 +69,16 @@ public class MovmentGridHandler : MonoBehaviour
         );
         return localPosition;
     }
+
+    private Vector3 GetWorldPositionFromGrid (Vector3 gridPosition){
+        Vector3 worldPosition = new Vector3(
+            gridPosition.x * xAxisSpacing,
+            gridPosition.y * yAxisSpacing,
+            gridPosition.z * zAxisSpacing
+        );
+
+        return worldPosition;
+    }
+
+    #endregion
 }
