@@ -39,9 +39,12 @@
      <Compile Include="Assets\Scripts\Input_Scripts\InputManager.cs" />
      <Compile Include="Assets\Scripts\Input_Scripts\MouseInput_Handler.cs" />
      <Compile Include="Assets\Scripts\Player_Scripts\PlayerMovement.cs" />
+     <Compile Include="Assets\Scripts\Player_Scripts\PlayerCollisionHandler.cs" />
      <Compile Include="Assets\Scripts\Player_Scripts\CameraController.cs" />
      <Compile Include="Assets\Scripts\Input_Scripts\KeyboardInput_Handler.cs" />
-     <Compile Include="Assets\Scripts\Player_Scripts\PlayerCollisionHandler.cs" />
+     <Compile Include="Assets\Scripts\Player_Scripts\PlayerAbilities.cs" />
+     <Compile Include="Assets\Scripts\Enemy Scripts\EnemyControlSystem.cs" />
+     <Compile Include="Assets\Scripts\PathfindingScripts\MovmentGridHandler.cs" />
     <Reference Include="UnityEngine">
         <HintPath>C:\Program Files\Unity\Hub\Editor\2020.3.25f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>

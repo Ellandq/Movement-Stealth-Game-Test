@@ -235,7 +235,6 @@ public class PlayerMovement : MonoBehaviour
                 // Calculate the normalized directional vector of the slope
                 Vector3 slopeDirection = -Vector3.Cross(Vector3.Cross(Vector3.up, hit.normal), hit.normal).normalized;
                 slopeDirection.y = -slopeDirection.y;
-                Debug.Log(slopeDirection);
 
                 return slopeDirection;
             }
