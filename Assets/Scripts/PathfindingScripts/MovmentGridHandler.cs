@@ -58,6 +58,15 @@ public class MovmentGridHandler : MonoBehaviour
 
     #endregion
 
+    #region Pathfinding
+
+    public List<Vector3> GetPathToTarget (Vector3 origin, Vector3 target, float height, float size, bool isFlying){
+
+        return new List<Vector3>();
+    }
+
+    #endregion
+
     #region Getters
 
     private Vector3 GetClosestEmptyGridPositionFromWorldPosition (Vector3 worldPosition){
