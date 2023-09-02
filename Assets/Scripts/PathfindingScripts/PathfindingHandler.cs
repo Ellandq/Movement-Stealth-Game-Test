@@ -117,11 +117,35 @@ public class PathfindingHandler : MonoBehaviour
     private List<Node> GetNeighbors(Node node, short defaultHeight, float height, float size, bool isFlying)
     {
         List<Node> neighbors = new List<Node>();
-        
-        
+
+        int x = node.position.x;
+        int z = node.position.z;
+
+        // Define the possible directions to check for neighbors (8 possible directions)
+        int[] dx = { -1, 0, 1, -1, 1, -1, 0, 1 };
+        int[] dz = { -1, -1, -1, 0, 0, 1, 1, 1 };
+
+        for (int i = 0; i < 8; i++)
+        {
+            int newX = x + dx[i];
+            int newZ = z + dz[i];
+
+            // Check if the new coordinates are within the bounds of your grid
+            if (newX >= 0 && newX < mapSizeX && newZ >= 0 && newZ < mapSizeZ)
+            {
+                PositionValidity positionValidity = IsPositionValidToMove(new Vector3Int(newX, defaultHeight, newZ), node.position, defaultHeight);
+
+                if (positionValidity == PositionValidity.False) continue;
+
+                Node neighborNode = new Node(new Vector3Int(newX, defaultHeight + (int)positionValidity, newZ));
+
+                neighbors.Add(neighborNode);
+            }
+        }
 
         return neighbors;
     }
+
 
     private List<Vector3> RetracePath(Node startNode, Node endNode)
     {
@@ -152,7 +176,7 @@ public class PathfindingHandler : MonoBehaviour
         return localPosition;
     }
 
-    private Vector3 GetWorldPositionFromGrid (Vector3 gridPosition){
+    private Vector3 GetWorldPositionFromGrid (Vector3Int gridPosition){
         Vector3 worldPosition = new Vector3(
             gridPosition.x * xAxisSpacing,
             gridPosition.y * yAxisSpacing,
@@ -172,5 +196,34 @@ public class PathfindingHandler : MonoBehaviour
         return defaultHeight;
     }
 
+    private PositionValidity IsPositionValidToMove (Vector3Int targetPosition, Vector3Int currentPosition, short defaultHeight){
+        for (int i = 0; i < defaultHeight; i++){
+            if (worldOccupationStatus[targetPosition.x, targetPosition.y - i, targetPosition.z]){
+                return PositionValidity.False;
+            }
+        }
+        if    (worldOccupationStatus[targetPosition.x, targetPosition.y - defaultHeight, targetPosition.z]
+        && !worldOccupationStatus[targetPosition.x, targetPosition.y + 1, targetPosition.z])
+        {
+            return PositionValidity.UpOne;
+        }
+        else if    (!worldOccupationStatus[targetPosition.x, targetPosition.y - defaultHeight, targetPosition.z]
+        && !worldOccupationStatus[targetPosition.x, targetPosition.y - (defaultHeight + 1), targetPosition.z])
+        {
+            return PositionValidity.DownOne;
+        }
+        else
+        {
+            return PositionValidity.True;
+        }
+    }
+
     #endregion
+
+    private enum PositionValidity{
+        True = 0, False = 2,
+        DownOne = -1, UpOne = 1
+    }
 }
+
+
