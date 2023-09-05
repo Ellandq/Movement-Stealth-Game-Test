@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class PathfindingHandler : MonoBehaviour
@@ -28,9 +29,6 @@ public class PathfindingHandler : MonoBehaviour
 
     private void Awake (){
         Instance = this;
-    }
-
-    private void Start (){
         SetUpPathfindingHandler();
     }
 
@@ -60,7 +58,12 @@ public class PathfindingHandler : MonoBehaviour
 
     #region Pathfinding
 
+    public List<Vector3> GetPathToTarget (Vector3 startPos, short targetRoomId, float height, float size, bool isFlying){
+        return GetPathToTarget(startPos, roomLocations[targetRoomId].position, height, size, isFlying);
+    }
+
     public List<Vector3> GetPathToTarget (Vector3 startPos, Vector3 targetPos, float height, float size, bool isFlying){
+        startPos = startPos - levelOriginPoint.position;
         short defaultHeight = GetDefaultHeight(GetClosestEmptyGridPositionFromWorldPosition(startPos));
         Node startNode = new Node(GetClosestEmptyGridPositionFromWorldPosition(startPos));
         Node targetNode = new Node(GetClosestEmptyGridPositionFromWorldPosition(targetPos));
@@ -186,11 +189,28 @@ public class PathfindingHandler : MonoBehaviour
         return worldPosition;
     }
 
+    private Vector3Int GetNormalizedRoomPosition (int roomId, short defaultHeight){
+        if (roomId > roomLocations.Count){
+            Debug.LogError("Room does not exist!");
+            throw new IndexOutOfRangeException();
+        }
+        Vector3Int position = GetClosestEmptyGridPositionFromWorldPosition(roomLocations[roomId].position);
+        for (int i = 0; i < position.y; i++){
+            if (worldOccupationStatus[position.x, position.y - i, position.z]){
+                position.y += defaultHeight - i;
+                return position;
+            }
+        }
+        Debug.LogError("Invalid room position!");
+        throw new IndexOutOfRangeException();
+    }
+
     private short GetDefaultHeight (Vector3 worldPosition){
-        Vector3 gridPosition = GetClosestEmptyGridPositionFromWorldPosition(worldPosition);
+        Vector3Int gridPosition = GetClosestEmptyGridPositionFromWorldPosition(worldPosition);
         short defaultHeight = 0;
-        for (int i = (int)worldPosition.y; i > 0; i--){
-            if (worldOccupationStatus[(int)worldPosition.x, i, (int)worldPosition.z]) return defaultHeight;
+        for (int i = gridPosition.y; i > 0; i--){
+            Debug.Log(new Vector3Int(gridPosition.x, i, gridPosition.z));
+            if (worldOccupationStatus[gridPosition.x, i, gridPosition.z]) return defaultHeight;
             else defaultHeight++;
         }
         return defaultHeight;
